@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fff">
+<title>TaskFlow — Medical Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --verde:#9DBF60;--grigio:#77797a;--grigio-chiaro:#aaaaaa;
+  --navy:#4A4C4D;--blue:#77797a;--blue-mid:#9DBF60;
+  --blue-light:#D5E3B7;--blue-xlight:#EEF5E3;
+  --accent:#9DBF60;--accent-light:#EEF5E3;
+  --red:#C0392B;--red-light:#FDECEA;
+  --green:#9DBF60;--green-light:#EEF5E3;
+  --g50:#F8F9F8;--g100:#F0F2EE;--g200:#E2E6DF;--g300:#C8CEC4;
+  --g500:#77797a;--g700:#4A4C4D;--g900:#2A2C2D;
+  --sh-sm:0 1px 3px rgba(74,76,77,.08),0 1px 2px rgba(74,76,77,.05);
+  --sh-md:0 4px 12px rgba(74,76,77,.10);
+  --sh-lg:0 12px 32px rgba(74,76,77,.14),0 4px 10px rgba(74,76,77,.07);
+  --r:10px;--rsm:6px;--rlg:16px;
+  font-family:'Raleway',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--g50);color:var(--g900);font-family:'Raleway',sans-serif;min-height:100vh;}
+.hid{display:none!important;}
+button{font-family:'Raleway',sans-serif;cursor:pointer;}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:600;box-shadow:var(--sh-lg);opacity:0;pointer-events:none;transition:opacity .25s;max-width:320px;}
+#toast.show{opacity:1;}
+#toast.tok{background:var(--green-light);color:#2d6a2d;border-left:3px solid var(--verde);}
+#toast.terr{background:var(--red-light);color:var(--red);border-left:3px solid var(--red);}
+#toast.tinfo{background:var(--blue-xlight);color:var(--navy);border-left:3px solid var(--verde);}
+
+/* LOGIN */
+#lp{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--g50);}
+.lcard{background:#fff;border-radius:var(--rlg);padding:40px 38px;width:100%;max-width:420px;box-shadow:var(--sh-lg);border:1px solid var(--g200);}
+.lfield{margin-bottom:16px;}
+.lfield label{display:block;font-size:12px;font-weight:600;color:var(--g700);letter-spacing:.5px;margin-bottom:6px;}
+.lfield input{width:100%;padding:11px 14px;border:1px solid var(--g200);border-radius:var(--rsm);background:var(--blue-xlight);font-family:'Raleway',sans-serif;font-size:14px;color:var(--g900);outline:none;transition:border-color .2s;}
+.lfield input:focus{border-color:var(--verde);}
+.lbtn{width:100%;padding:12px;background:var(--verde);color:#fff;border:none;border-radius:var(--rsm);font-family:'Raleway',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-top:4px;}
+.lbtn:hover{opacity:.88;}
+.lerr{background:var(--red-light);color:var(--red);border-radius:var(--rsm);padding:10px 14px;font-size:13px;margin-top:14px;display:none;}
+
+/* APP */
+#app{display:flex;flex-direction:column;min-height:100vh;}
+#topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+#tb-top{height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g100);}
+#tb-right{display:flex;align-items:center;gap:14px;}
+#tb-ver{font-size:10px;color:var(--grigio-chiaro);letter-spacing:.3px;}
+#tb-user{font-size:13px;font-weight:600;color:var(--navy);}
+#tb-role{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--blue-xlight);color:var(--verde);text-transform:uppercase;letter-spacing:.5px;}
+#lout{font-size:12px;font-weight:600;padding:6px 14px;background:none;border:1px solid var(--g300);border-radius:var(--rsm);color:var(--g500);transition:all .17s;}
+#lout:hover{background:var(--g100);color:var(--g700);}
+#tb-nav{height:40px;display:flex;align-items:stretch;}
+.tnb{display:flex;align-items:center;gap:6px;padding:0 16px;font-size:12.5px;font-weight:600;color:var(--g500);cursor:pointer;border:none;background:none;font-family:'Raleway',sans-serif;letter-spacing:.3px;border-bottom:2.5px solid transparent;transition:all .17s;text-transform:uppercase;}
+.tnb:hover{color:var(--g700);border-bottom-color:var(--g300);}
+.tnb.active{color:var(--verde);border-bottom-color:var(--verde);}
+.tnb .nbadge{background:var(--verde);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
+#main{flex:1;}
+#pb{padding:28px 32px;max-width:1100px;margin:0 auto;}
+
+/* GENERICS */
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+.page-hdr h1{font-size:20px;font-weight:700;color:var(--navy);}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:var(--rsm);border:none;font-family:'Raleway',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .17s,background .17s;letter-spacing:.2px;}
+.btn:hover{opacity:.88;}
+.btn-primary{background:var(--verde);color:#fff;}
+.btn-ghost{background:#fff;color:var(--g700);border:1px solid var(--g300);}
+.btn-ghost:hover{background:var(--g100);}
+.btn-danger{background:var(--red-light);color:var(--red);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:28px;}
+.stat-card{background:#fff;border:1px solid var(--g200);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh-sm);}
+.stat-val{font-size:30px;font-weight:800;color:var(--navy);line-height:1;}
+.stat-val.verde{color:var(--verde);}
+.stat-val.rosso{color:var(--red);}
+.stat-label{font-size:11px;color:var(--g500);margin-top:4px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;}
+
+/* FILTERS */
+.filters{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--g200);background:#fff;color:var(--g500);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+.filter-chip:hover{border-color:var(--verde);color:var(--verde);}
+.filter-chip.active{background:var(--blue-xlight);border-color:var(--verde);color:var(--verde);}
+.filter-chip .dot{width:8px;height:8px;border-radius:50%;}
+.search-wrap{position:relative;}
+.search-wrap input{padding:7px 12px 7px 32px;border:1px solid var(--g200);border-radius:var(--r);font-family:'Raleway',sans-serif;font-size:13px;color:var(--g900);background:#fff;outline:none;width:200px;transition:border-color .2s;}
+.search-wrap input:focus{border-color:var(--verde);}
+.search-wrap::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:12px;}
+
+/* TASK LIST */
+.section-lbl{font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.task-list{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;}
+.task-card{background:#fff;border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:box-shadow .15s,border-color .15s;box-shadow:var(--sh-sm);}
+.task-card:hover{box-shadow:var(--sh-md);border-color:var(--g300);}
+.task-card.done{opacity:.5;}
+.task-card.done .task-title{text-decoration:line-through;}
+.prio-bar{width:4px;border-radius:4px;flex-shrink:0;align-self:stretch;min-height:20px;}
+.prio-alta{background:var(--red);}
+.prio-media{background:var(--verde);}
+.prio-bassa{background:var(--g300);}
+.task-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--g300);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;background:#fff;}
+.task-check:hover{border-color:var(--verde);}
+.task-card.done .task-check{background:var(--verde);border-color:var(--verde);color:#fff;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.task-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.tag-cat{background:var(--blue-xlight);color:var(--verde);}
+.tag-due{color:var(--g500);}
+.tag-due.scaduto{color:var(--red);font-weight:700;}
+.tag-due.oggi{color:#c07000;}
+.tag-assignee{background:var(--g100);color:var(--g700);}
+.tag-stato-aperto{background:var(--g100);color:var(--g700);}
+.tag-stato-in_corso{background:#FFF9E6;color:#9a6d00;}
+.tag-stato-completato{background:var(--green-light);color:#2d6a2d;}
+.task-fb-preview{margin-top:7px;font-size:12px;color:var(--g500);padding:5px 10px;background:var(--g50);border-radius:6px;border-left:2px solid var(--verde);}
+
+/* CALENDAR */
+.cal-wrap{background:#fff;border:1px solid var(--g200);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:hidden;margin-bottom:24px;}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--g200);}
+.cal-hdr-title{font-size:15px;font-weight:700;color:var(--navy);}
+.cal-nav{display:flex;gap:4px;}
+.cal-nav-btn{width:30px;height:30px;border-radius:var(--rsm);border:1px solid var(--g200);background:none;color:var(--g500);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Raleway',sans-serif;}
+.cal-nav-btn:hover{background:var(--g100);color:var(--navy);}
+.cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--g200);}
+.cal-weekday{text-align:center;font-size:11px;font-weight:700;color:var(--g500);padding:10px 0;text-transform:uppercase;letter-spacing:.5px;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-day{min-height:80px;padding:8px;border-right:1px solid var(--g200);border-bottom:1px solid var(--g200);cursor:pointer;transition:background .1s;}
+.cal-day:hover{background:var(--g50);}
+.cal-day:nth-child(7n){border-right:none;}
+.cal-day-num{font-size:12px;font-weight:600;color:var(--g500);width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;margin-bottom:4px;}
+.cal-day.today .cal-day-num{background:var(--verde);color:#fff;}
+.cal-day.other-month .cal-day-num{color:var(--g300);}
+.cal-ev{font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* MODAL */
+#modal-ov{position:fixed;inset:0;background:rgba(74,76,77,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:#fff;border-radius:var(--rlg);padding:32px;width:min(560px,100%);max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg);animation:mfade .2s ease;}
+@keyframes mfade{from{opacity:0;transform:scale(.97);}}
+.modal-title{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:24px;}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--g200);}
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--g700);letter-spacing:.5px;margin-bottom:6px;text-transform:uppercase;}
+.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1px solid var(--g200);border-radius:var(--rsm);font-family:'Raleway',sans-serif;font-size:13.5px;color:var(--g900);background:var(--g50);outline:none;transition:border-color .2s;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--verde);background:#fff;}
+.fg textarea{resize:vertical;min-height:80px;}
+.fg select option{background:#fff;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* FEEDBACK */
+.fb-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--g200);}
+.fb-section-title{font-size:12px;font-weight:700;color:var(--g700);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+.fb-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.fb-item{background:var(--g50);border-radius:var(--rsm);padding:10px 13px;border:1px solid var(--g200);}
+.fb-author{font-size:12px;font-weight:700;color:var(--verde);margin-bottom:3px;}
+.fb-text{font-size:13px;color:var(--g700);}
+.fb-date{font-size:10px;color:var(--grigio-chiaro);margin-top:3px;}
+.fb-input-row{display:flex;gap:8px;}
+.fb-input-row input{flex:1;padding:9px 12px;border:1px solid var(--g200);border-radius:var(--rsm);font-family:'Raleway',sans-serif;font-size:13px;color:var(--g900);background:var(--g50);outline:none;}
+.fb-input-row input:focus{border-color:var(--verde);}
+
+/* UTENTI */
+.users-table{width:100%;border-collapse:collapse;}
+.users-table th{font-size:11px;font-weight:700;color:var(--g500);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:2px solid var(--g200);text-align:left;background:var(--g50);}
+.users-table td{padding:12px;border-bottom:1px solid var(--g100);font-size:13px;vertical-align:middle;}
+.users-table tr:last-child td{border-bottom:none;}
+.users-table tr:hover td{background:var(--g50);}
+.badge-role{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.badge-admin{background:var(--blue-xlight);color:var(--verde);}
+.badge-utente{background:var(--g100);color:var(--g500);}
+.email-info{margin-top:6px;padding:7px 11px;border-radius:var(--rsm);font-size:12px;font-weight:500;display:none;}
+.email-info.ok{background:var(--green-light);color:#2d6a2d;}
+.email-info.new{background:var(--blue-xlight);color:var(--navy);}
+.email-info.err{background:var(--red-light);color:var(--red);}
+
+/* VOICE */
+#voice-panel{position:fixed;bottom:24px;right:24px;width:min(420px,calc(100vw - 32px));background:#fff;border:1px solid var(--g200);border-radius:var(--rlg);padding:20px;box-shadow:var(--sh-lg);z-index:200;display:none;}
+#voice-panel.open{display:block;animation:mfade .25s ease;}
+.vp-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.vp-orb{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:radial-gradient(circle at 40% 40%,var(--verde),#5a7a32);}
+.vp-orb.listening{animation:breathe .8s ease-in-out infinite;}
+.vp-orb.thinking{animation:spin 1.2s linear infinite;}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@keyframes spin{to{filter:hue-rotate(360deg)}}
+.vp-status{font-size:12px;color:var(--g500);}
+.vp-status strong{color:var(--navy);}
+.vp-transcript{background:var(--g50);border-radius:var(--rsm);padding:10px 13px;font-size:13px;color:var(--g500);min-height:38px;line-height:1.5;margin-bottom:10px;font-style:italic;border:1px solid var(--g200);}
+.vp-response{font-size:13.5px;line-height:1.6;color:var(--navy);min-height:20px;margin-bottom:14px;}
+.vp-actions{display:flex;gap:8px;justify-content:flex-end;}
+.vp-close{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--g500);font-size:20px;cursor:pointer;line-height:1;padding:0;}
+.mic-btn{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--g300);background:#fff;color:var(--g500);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .2s;}
+.mic-btn:hover{border-color:var(--verde);color:var(--verde);}
+.mic-btn.active{border-color:var(--red);color:var(--red);animation:micpulse 1s infinite;}
+@keyframes micpulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.3)}50%{box-shadow:0 0 0 7px rgba(192,57,43,0)}}
+
+/* EMPTY / SPINNER */
+.empty-state{text-align:center;padding:56px 20px;color:var(--g500);}
+.empty-state .icon{font-size:44px;margin-bottom:12px;}
+.empty-state p{font-size:13px;line-height:1.7;}
+.spn{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;}
+#loading{position:fixed;inset:0;background:var(--g50);display:flex;align-items:center;justify-content:center;z-index:2000;}
+#loading .lspn{width:36px;height:36px;border:3px solid var(--g200);border-top-color:var(--verde);border-radius:50%;animation:spin .8s linear infinite;}
+
+@media(max-width:680px){
+  #pb{padding:16px;}
+  .fg-row{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+  #topbar{padding:0 14px;}
+  .tnb{padding:0 10px;font-size:11px;}
+  #tb-ver{display:none;}
+}
+</style>
+</head>
+<body>
+<div id="loading"><div class="lspn"></div></div>
+<div id="toast"></div>
+
+<!-- LOGIN -->
+<div id="lp">
+  <div class="lcard">
+    <div id="login-logo"></div>
+    <div style="margin-top:14px;font-size:13px;color:var(--grigio);text-align:center">Accesso riservato al personale autorizzato</div>
+    <div id="lerr" class="lerr"></div>
+    <div class="lfield" style="margin-top:16px"><label>E-Mail</label><input type="email" id="lem" placeholder="nome@medicalgroup.it" autocomplete="username"></div>
+    <div class="lfield"><label>Password</label><input type="password" id="lpw" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="lbtn" id="lbtn" onclick="doLogin()">Accedi</button>
+    <div id="login-ver" style="margin-top:14px;font-size:10px;color:var(--grigio-chiaro);text-align:center;letter-spacing:.5px"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hid">
+  <div id="topbar">
+    <div id="tb-top">
+      <div id="tb-logo"></div>
+      <div id="tb-right">
+        <span id="tb-ver"></span>
+        <span id="tb-user"></span>
+        <span id="tb-role"></span>
+        <button class="mic-btn" id="mic-btn-top" onclick="toggleVoice()" title="Crea task con la voce">🎤</button>
+        <button id="lout" onclick="doLogout()">Esci</button>
+      </div>
+    </div>
+    <nav id="tb-nav"></nav>
+  </div>
+  <main id="main"><div id="pb"></div></main>
+</div>
+
+<!-- MODAL -->
+<div id="modal-ov" class="hid" onclick="closeModalOnBg(event)">
+  <div id="modal-body" class="modal" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- VOICE PANEL -->
+<div id="voice-panel">
+  <button class="vp-close" onclick="closeVoice()">✕</button>
+  <div class="vp-header">
+    <div class="vp-orb" id="vp-orb"></div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--navy)">Assistente Vocale</div>
+      <div class="vp-status" id="vp-status"><strong>Pronto</strong> — premi il pulsante e parla</div>
+    </div>
+  </div>
+  <div class="vp-transcript" id="vp-transcript">Il tuo messaggio apparirà qui...</div>
+  <div class="vp-response" id="vp-response"></div>
+  <div class="vp-actions">
+    <button class="btn btn-ghost btn-sm" onclick="closeVoice()">Chiudi</button>
+    <button class="btn btn-primary btn-sm" id="vp-mic-btn" onclick="startListening()">🎤 Parla</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════
+// CONFIG — sostituire con valori reali
+// ══════════════════════════════════════════
+const CFG={
+  URL:'https://iczsdqcnvauopwkuspti.supabase.co',
+  KEY:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImljenNkcWNudmF1b3B3a3VzcHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NTQ0MjMsImV4cCI6MjA5MjQzMDQyM30.SmcRHPLM2PEq4Hn-5CQhMyQKoz0PN_0lbN_X3l9MNUE',
+  FN:'https://iczsdqcnvauopwkuspti.supabase.co/functions/v1',
+};
+const T=n=>`task_${n}`;
+
+// STATO
+const S={user:null,token:null,profili:[],categorie:[],tasks:[],feedback:{},page:'tasks',filterCat:null,filterStato:null,searchQ:'',calMonth:null,voiceCtx:null};
+
+// UTILS
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const p2=n=>String(n).padStart(2,'0');
+
+function dateToStr(d){return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;}
+function todayStr(){return dateToStr(new Date());}
+function fmt(d){if(!d)return'—';const dt=typeof d==='string'?new Date(d.length===10?d+'T00:00:00':d):d;return dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function fmtDT(d){if(!d)return'';const dt=new Date(d);return dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})+' '+dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});}
+
+let _tid;
+function toast(msg,type='ok'){const el=$('toast');clearTimeout(_tid);el.textContent=msg;el.className=`show t${type}`;_tid=setTimeout(()=>el.className='',3200);}
+
+// SUPABASE REST
+async function db(method,table,opts={}){
+  const{flt='',body=null,sel='*',ord='',lim=''}=opts;
+  let url=`${CFG.URL}/rest/v1/${table}?select=${sel}`;
+  if(flt)url+=`&${flt}`;if(ord)url+=`&order=${ord}`;if(lim)url+=`&limit=${lim}`;
+  const headers={'apikey':CFG.KEY,'Authorization':`Bearer ${S.token||CFG.KEY}`,'Content-Type':'application/json','Prefer':method==='POST'?'return=representation':''};
+  const res=await fetch(url,{method,headers,body:body?JSON.stringify(body):undefined});
+  if(!res.ok){const e=await res.text();throw new Error(`${method} ${table}: ${e}`);}
+  return method==='DELETE'?null:res.json();
+}
+async function supaLogin(email,pwd){
+  const res=await fetch(`${CFG.URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':CFG.KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.error_description||data.error||'Errore di autenticazione');
+  return data;
+}
+async function callFn(name,body){
+  const res=await fetch(`${CFG.FN}/${name}`,{method:'POST',headers:{'Authorization':`Bearer ${S.token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return res.json();
+}
+
+// AUTH
+async function doLogin(){
+  const email=$('lem').value.trim(),pwd=$('lpw').value;
+  const btn=$('lbtn'),err=$('lerr');
+  err.style.display='none';
+  if(!email||!pwd){err.textContent='Inserisci email e password.';err.style.display='block';return;}
+  btn.innerHTML='<span class="spn"></span> Accesso…';btn.disabled=true;
+  try{
+    const auth=await supaLogin(email,pwd);
+    S.token=auth.access_token;
+    const rows=await db('GET',T('profili'),{flt:`id=eq.${auth.user.id}`});
+    if(!rows?.length)throw new Error('Profilo non trovato. Contatta l\'amministratore.');
+    if(rows[0].attivo===false)throw new Error('Utente disabilitato. Contatta l\'amministratore.');
+    S.user=rows[0];
+    await loadAll();
+    $('lp').classList.add('hid');$('app').classList.remove('hid');
+    initTopbar();goPage('tasks');
+    initNotifications();
+  }catch(e){err.textContent=e.message;err.style.display='block';btn.innerHTML='Accedi';btn.disabled=false;}
+}
+function doLogout(){S.user=null;S.token=null;$('app').classList.add('hid');$('lp').classList.remove('hid');$('lem').value='';$('lpw').value='';}
+
+// LOAD
+async function loadAll(){
+  const[profili,categorie,tasks,feedback]=await Promise.all([
+    db('GET',T('profili'),{ord:'cognome.asc,nome.asc'}),
+    db('GET',T('categorie'),{ord:'nome.asc'}),
+    db('GET',T('tasks'),{ord:'created_at.desc'}),
+    db('GET',T('feedback'),{ord:'created_at.asc'}),
+  ]);
+  S.profili=profili||[];S.categorie=categorie||[];S.tasks=tasks||[];
+  S.feedback={};
+  (feedback||[]).forEach(f=>{if(!S.feedback[f.task_id])S.feedback[f.task_id]=[];S.feedback[f.task_id].push(f);});
+}
+
+// LOGO
+function logoSVG(small){const w=small?28:36,h=small?22:28;return `<svg width="${w}" height="${h}" viewBox="0 0 90 70" fill="none"><circle cx="28" cy="22" r="19" stroke="#D5E3B7" stroke-width="3.5" fill="none"/><circle cx="40" cy="38" r="24" stroke="#77797A" stroke-width="3.5" fill="none"/></svg>`;}
+function logoHTML(small=false){return `<div style="display:flex;align-items:center;gap:${small?6:10}px;">${logoSVG(small)}<div style="line-height:1.15;"><div style="font-weight:300;font-size:${small?11:14}px;letter-spacing:4px;text-transform:uppercase;"><span style="color:var(--grigio)">MEDICAL</span><span style="color:var(--verde)">GROUP</span></div><div style="font-size:9px;letter-spacing:2px;color:var(--grigio-chiaro);text-transform:uppercase;font-weight:500;">Gestione Task</div></div></div>`;}
+
+// TOPBAR
+function initTopbar(){
+  $('tb-logo').innerHTML=logoHTML(true);
+  $('tb-user').textContent=`${S.user.nome} ${S.user.cognome}`;
+  $('tb-role').textContent=S.user.ruolo;
+  const NAV=[
+    {id:'tasks',label:'Task',badge:()=>S.tasks.filter(t=>t.stato!=='completato').length},
+    {id:'calendar',label:'Calendario'},
+    ...(S.user.ruolo==='admin'?[{id:'utenti',label:'Utenti'}]:[]),
+  ];
+  const nav=$('tb-nav');nav.innerHTML='';
+  NAV.forEach(n=>{
+    const btn=document.createElement('button');
+    btn.className='tnb'+(S.page===n.id?' active':'');
+    btn.dataset.page=n.id;
+    const badge=n.badge?n.badge():0;
+    btn.innerHTML=n.label+(badge>0?` <span class="nbadge">${badge}</span>`:'');
+    btn.onclick=()=>goPage(n.id);
+    nav.appendChild(btn);
+  });
+}
+function goPage(pg){S.page=pg;document.querySelectorAll('.tnb').forEach(b=>b.classList.toggle('active',b.dataset.page===pg));renderPage();}
+function renderPage(){const pb=$('pb');if(S.page==='tasks')renderTasks(pb);else if(S.page==='calendar')renderCalendar(pb);else if(S.page==='utenti')renderUtenti(pb);}
+
+// TASKS
+function getFiltered(){
+  let t=[...S.tasks];
+  if(S.filterCat)t=t.filter(x=>x.categoria_id===S.filterCat);
+  if(S.filterStato)t=t.filter(x=>x.stato===S.filterStato);
+  if(S.searchQ){const q=S.searchQ.toLowerCase();t=t.filter(x=>x.titolo.toLowerCase().includes(q)||(x.descrizione||'').toLowerCase().includes(q));}
+  return t;
+}
+
+function renderTasks(pb){
+  const td=todayStr(),all=S.tasks;
+  const open=all.filter(t=>t.stato!=='completato').length;
+  const todayN=all.filter(t=>t.scadenza===td&&t.stato!=='completato').length;
+  const scad=all.filter(t=>t.scadenza&&t.scadenza<td&&t.stato!=='completato').length;
+  const done=all.filter(t=>t.stato==='completato').length;
+
+  let h=`<div class="page-hdr"><h1>Task</h1><button class="btn btn-primary" onclick="openTaskModal()">+ Nuovo Task</button></div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val">${open}</div><div class="stat-label">Da completare</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--grigio)">${todayN}</div><div class="stat-label">Oggi</div></div>
+    <div class="stat-card"><div class="stat-val rosso">${scad}</div><div class="stat-label">Scaduti</div></div>
+    <div class="stat-card"><div class="stat-val verde">${done}</div><div class="stat-label">Completati</div></div>
+  </div>
+  <div class="filters">
+    <div class="filter-chip ${!S.filterCat&&!S.filterStato?'active':''}" onclick="setFilter(null,null)">Tutti</div>
+    ${S.categorie.map(c=>`<div class="filter-chip ${S.filterCat===c.id?'active':''}" onclick="setFilter('${c.id}',S.filterStato)"><span class="dot" style="background:${c.colore}"></span>${esc(c.nome)}</div>`).join('')}
+    <div class="filter-chip ${S.filterStato==='in_corso'?'active':''}" onclick="setFilter(S.filterCat,'in_corso')">🔄 In corso</div>
+    <div class="filter-chip ${S.filterStato==='aperto'?'active':''}" onclick="setFilter(S.filterCat,'aperto')">⏳ Aperti</div>
+    <div class="search-wrap" style="margin-left:auto"><input placeholder="Cerca..." value="${esc(S.searchQ)}" oninput="setSearch(this.value)"></div>
+  </div>`;
+
+  const tasks=getFiltered();
+  const pending=tasks.filter(t=>t.stato!=='completato').sort((a,b)=>({alta:0,media:1,bassa:2}[a.priorita]||1)-({alta:0,media:1,bassa:2}[b.priorita]||1));
+  const completed=tasks.filter(t=>t.stato==='completato');
+
+  if(!pending.length&&!completed.length){
+    h+=`<div class="empty-state"><div class="icon">✨</div><p>Nessun task trovato.<br>Premi <strong>+ Nuovo Task</strong> o usa il <strong>microfono</strong> 🎤</p></div>`;
+  }else{
+    if(pending.length)h+=`<div class="section-lbl">Da fare (${pending.length})</div><div class="task-list">${pending.map(t=>taskCardHTML(t)).join('')}</div>`;
+    if(completed.length)h+=`<div class="section-lbl">Completati (${completed.length})</div><div class="task-list">${completed.map(t=>taskCardHTML(t)).join('')}</div>`;
+  }
+  pb.innerHTML=h;
+}
+
+function taskCardHTML(t){
+  const cat=S.categorie.find(c=>c.id===t.categoria_id);
+  const ass=S.profili.find(p=>p.id===t.assegnato_a);
+  const td=todayStr();
+  let dueClass='',dueLabel='';
+  if(t.scadenza){
+    if(t.scadenza<td){dueClass='scaduto';dueLabel=`⚠ ${fmt(t.scadenza)}`;}
+    else if(t.scadenza===td){dueClass='oggi';dueLabel='⏰ Oggi';}
+    else dueLabel=`📅 ${fmt(t.scadenza)}`;
+  }
+  const fb=S.feedback[t.id]||[];
+  const lastFb=fb[fb.length-1];
+  const isDone=t.stato==='completato';
+  return `<div class="task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
+    <div class="prio-bar prio-${t.priorita}"></div>
+    <div class="task-check" onclick="event.stopPropagation();toggleStato('${t.id}')">${isDone?'✓':''}</div>
+    <div class="task-body">
+      <div class="task-title">${esc(t.titolo)}</div>
+      <div class="task-meta">
+        ${cat?`<span class="tag tag-cat"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${cat.colore};margin-right:3px"></span>${esc(cat.nome)}</span>`:''}
+        ${t.scadenza?`<span class="tag tag-due ${dueClass}">${dueLabel}</span>`:''}
+        ${ass?`<span class="tag tag-assignee">👤 ${esc(ass.nome)} ${esc(ass.cognome)}</span>`:''}
+        <span class="tag tag-stato-${t.stato}">${{aperto:'Aperto',in_corso:'In corso',completato:'Completato'}[t.stato]||t.stato}</span>
+        ${t.reminder?`<span class="tag" style="color:var(--verde)">🔔 ${fmtDT(t.reminder)}</span>`:''}
+      </div>
+      ${lastFb?`<div class="task-fb-preview">💬 ${esc(lastFb.testo)}</div>`:''}
+    </div>
+  </div>`;
+}
+
+function setFilter(cat,stato){S.filterCat=cat;S.filterStato=stato;renderPage();}
+function setSearch(q){S.searchQ=q;renderPage();}
+
+async function toggleStato(id){
+  const t=S.tasks.find(x=>x.id===id);if(!t)return;
+  const ns=t.stato==='completato'?'aperto':'completato';
+  await db('PATCH',T('tasks'),{flt:`id=eq.${id}`,body:{stato:ns}});
+  t.stato=ns;renderPage();initTopbar();
+}
+
+// TASK MODAL
+let editingTaskId=null;
+
+function openTaskModal(taskId){
+  editingTaskId=taskId||null;
+  const t=taskId?S.tasks.find(x=>x.id===taskId):null;
+  const catOpts=S.categorie.map(c=>`<option value="${c.id}" ${t&&t.categoria_id===c.id?'selected':''}>${esc(c.nome)}</option>`).join('');
+  const pplOpts=S.profili.map(p=>`<option value="${p.id}" ${t&&t.assegnato_a===p.id?'selected':''}>${esc(p.nome)} ${esc(p.cognome)}</option>`).join('');
+  const fb=taskId?(S.feedback[taskId]||[]):[];
+  const fbHTML=fb.map(f=>`<div class="fb-item"><div class="fb-author">${esc(f.autore_nome||'Utente')}</div><div class="fb-text">${esc(f.testo)}</div><div class="fb-date">${fmt(f.created_at)}</div></div>`).join('')||`<div style="font-size:12px;color:var(--g500)">Nessun feedback ancora.</div>`;
+
+  $('modal-body').innerHTML=`
+    <div class="modal-title">${t?'Modifica Task':'Nuovo Task'}</div>
+    <div class="fg"><label>Titolo *</label><input id="m-titolo" value="${esc(t?.titolo||'')}" placeholder="Descrivi il task..."></div>
+    <div class="fg"><label>Descrizione</label><textarea id="m-desc">${esc(t?.descrizione||'')}</textarea></div>
+    <div class="fg-row">
+      <div class="fg"><label>Categoria</label><select id="m-cat"><option value="">— Nessuna —</option>${catOpts}</select></div>
+      <div class="fg"><label>Priorità</label><select id="m-prio"><option value="media" ${(!t||t.priorita==='media')?'selected':''}>Media</option><option value="alta" ${t?.priorita==='alta'?'selected':''}>Alta</option><option value="bassa" ${t?.priorita==='bassa'?'selected':''}>Bassa</option></select></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
+      <div class="fg"><label>Assegna a</label><select id="m-assign"><option value="">— Nessuno —</option>${pplOpts}</select></div>
+    </div>
+    <div class="fg-row">
+      <div class="fg"><label>Reminder</label><input type="datetime-local" id="m-reminder" value="${t?.reminder?t.reminder.slice(0,16):''}"></div>
+      <div class="fg"><label>Stato</label><select id="m-stato"><option value="aperto" ${(!t||t.stato==='aperto')?'selected':''}>Aperto</option><option value="in_corso" ${t?.stato==='in_corso'?'selected':''}>In corso</option><option value="completato" ${t?.stato==='completato'?'selected':''}>Completato</option></select></div>
+    </div>
+    ${t?`<div class="fb-section"><div class="fb-section-title">Feedback (${fb.length})</div><div class="fb-list">${fbHTML}</div><div class="fb-input-row"><input id="fb-new" placeholder="Aggiungi un aggiornamento..."><button class="btn btn-ghost btn-sm" onclick="addFeedback('${t.id}')">Invia</button></div></div>`:''}
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Annulla</button>
+      ${t?`<button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Elimina</button>`:''}
+      <button class="btn btn-primary" onclick="saveTask()">Salva</button>
+    </div>`;
+  openModal();
+  setTimeout(()=>$('m-titolo')?.focus(),80);
+}
+
+async function saveTask(){
+  const titolo=$('m-titolo').value.trim();
+  if(!titolo){toast('Inserisci un titolo per il task','terr');$('m-titolo').focus();return;}
+  const body={titolo,descrizione:$('m-desc').value.trim(),categoria_id:$('m-cat').value||null,priorita:$('m-prio').value,scadenza:$('m-scadenza').value||null,reminder:$('m-reminder').value?new Date($('m-reminder').value).toISOString():null,assegnato_a:$('m-assign').value||null,stato:$('m-stato').value};
+  try{
+    if(editingTaskId){
+      await db('PATCH',T('tasks'),{flt:`id=eq.${editingTaskId}`,body});
+      const idx=S.tasks.findIndex(t=>t.id===editingTaskId);
+      if(idx>=0)S.tasks[idx]={...S.tasks[idx],...body};
+      toast('Task aggiornato ✓');
+    }else{
+      body.creato_da=S.user.id;
+      const rows=await db('POST',T('tasks'),{body});
+      if(rows?.[0])S.tasks.unshift(rows[0]);
+      toast('Task creato ✓');
+      if(body.reminder)scheduleReminder({...body,id:rows?.[0]?.id,titolo});
+    }
+    closeModal();renderPage();initTopbar();
+  }catch(e){toast(e.message,'terr');}
+}
+
+async function deleteTask(id){
+  if(!confirm('Eliminare questo task?'))return;
+  await db('DELETE',T('tasks'),{flt:`id=eq.${id}`});
+  S.tasks=S.tasks.filter(t=>t.id!==id);
+  closeModal();renderPage();initTopbar();toast('Task eliminato','tinfo');
+}
+
+async function addFeedback(taskId){
+  const testo=$('fb-new').value.trim();if(!testo)return;
+  const body={task_id:taskId,autore_id:S.user.id,testo,autore_nome:`${S.user.nome} ${S.user.cognome}`};
+  const rows=await db('POST',T('feedback'),{body});
+  if(!S.feedback[taskId])S.feedback[taskId]=[];
+  S.feedback[taskId].push(rows?.[0]||{...body,id:Math.random().toString(36).slice(2),created_at:new Date().toISOString()});
+  openTaskModal(taskId);toast('Feedback inviato ✓');
+}
+
+// CALENDARIO
+function renderCalendar(pb){
+  const now=S.calMonth?new Date(S.calMonth+'-01'):new Date();
+  const year=now.getFullYear(),month=now.getMonth();
+  const mName=now.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+  const first=new Date(year,month,1).getDay(),days=new Date(year,month+1,0).getDate();
+  const off=(first+6)%7,td=todayStr();
+  const dayL=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  let cells='';
+  const prev=new Date(year,month,0).getDate();
+  for(let i=off-1;i>=0;i--)cells+=`<div class="cal-day other-month"><div class="cal-day-num">${prev-i}</div></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=`${year}-${p2(month+1)}-${p2(d)}`;
+    const isT=ds===td;
+    const dt=S.tasks.filter(t=>t.scadenza===ds&&t.stato!=='completato');
+    let evs=dt.slice(0,3).map(t=>{const cat=S.categorie.find(c=>c.id===t.categoria_id);return`<div class="cal-ev" style="background:${cat?cat.colore+'22':'var(--blue-xlight)'};color:${cat?cat.colore:'var(--verde)'}">${esc(t.titolo)}</div>`;}).join('');
+    if(dt.length>3)evs+=`<div class="cal-ev" style="color:var(--g500)">+${dt.length-3} altri</div>`;
+    cells+=`<div class="cal-day${isT?' today':''}" onclick="quickAddFromCal('${ds}')"><div class="cal-day-num">${d}</div>${evs}</div>`;
+  }
+  const remain=Math.ceil((off+days)/7)*7-(off+days);
+  for(let d=1;d<=remain;d++)cells+=`<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  const pv=new Date(year,month-1,1),nx=new Date(year,month+1,1);
+  let h=`<div class="page-hdr"><h1>Calendario</h1></div>
+  <div class="cal-wrap">
+    <div class="cal-hdr">
+      <div class="cal-hdr-title">${mName.charAt(0).toUpperCase()+mName.slice(1)}</div>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="navCal('${dateToStr(pv).slice(0,7)}')">‹</button>
+        <button class="cal-nav-btn" onclick="navCal(null)">Oggi</button>
+        <button class="cal-nav-btn" onclick="navCal('${dateToStr(nx).slice(0,7)}')">›</button>
+      </div>
+    </div>
+    <div class="cal-weekdays">${dayL.map(d=>`<div class="cal-weekday">${d}</div>`).join('')}</div>
+    <div class="cal-days">${cells}</div>
+  </div>`;
+  const mt=S.tasks.filter(t=>t.scadenza&&t.stato!=='completato'&&t.scadenza.startsWith(`${year}-${p2(month+1)}`));
+  if(mt.length)h+=`<div class="section-lbl">Task del mese</div><div class="task-list">${mt.sort((a,b)=>a.scadenza.localeCompare(b.scadenza)).map(t=>taskCardHTML(t)).join('')}</div>`;
+  pb.innerHTML=h;
+}
+function navCal(ym){S.calMonth=ym;renderPage();}
+function quickAddFromCal(ds){openTaskModal();setTimeout(()=>{const el=$('m-scadenza');if(el)el.value=ds;},80);}
+
+// UTENTI
+function renderUtenti(pb){
+  const rows=S.profili.map(p=>`<tr><td>${esc(p.nome)} ${esc(p.cognome)}</td><td>${esc(p.email)}</td><td><span class="badge-role badge-${p.ruolo}">${p.ruolo}</span></td><td>${p.attivo?'✅':'❌'}</td><td><button class="btn btn-ghost btn-sm" onclick="openUtenteModal('${p.id}')">Modifica</button></td></tr>`).join('');
+  pb.innerHTML=`<div class="page-hdr"><h1>Gestione Utenti</h1><button class="btn btn-primary" onclick="openUtenteModal()">+ Nuovo Utente</button></div>
+  <div style="background:#fff;border:1px solid var(--g200);border-radius:var(--r);box-shadow:var(--sh-sm);overflow:auto">
+    <table class="users-table"><thead><tr><th>Nome</th><th>E-Mail</th><th>Ruolo</th><th>Attivo</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+
+let editingUserId=null;
+function openUtenteModal(uid_val){
+  editingUserId=uid_val||null;
+  const u=uid_val?S.profili.find(p=>p.id===uid_val):null;
+  const isNew=!u,attivoChecked=!u||u.attivo!==false;
+  $('modal-body').innerHTML=`
+    <div class="modal-title">${isNew?'Nuovo Utente':'Modifica Utente'}</div>
+    <div class="fg-row"><div class="fg"><label>Nome</label><input id="um-nome" value="${esc(u?.nome||'')}"></div><div class="fg"><label>Cognome</label><input id="um-cognome" value="${esc(u?.cognome||'')}"></div></div>
+    <div class="fg"><label>E-Mail</label><input type="email" id="um-email" value="${esc(u?.email||'')}" ${!isNew?'readonly':''}><div id="um-email-info" class="email-info"></div></div>
+    <div id="um-pwd-wrap" class="fg" ${!isNew?'style="display:none"':''}><label>Password</label><input type="password" id="um-pwd" placeholder="••••••••" autocomplete="new-password">${!isNew?`<div style="font-size:11px;color:var(--grigio);margin-top:5px">⚠ Questa password sarà valida per tutti i tool</div>`:''}</div>
+    <div class="fg"><label>Ruolo</label><select id="um-ruolo"><option value="utente" ${(!u||u.ruolo==='utente')?'selected':''}>Utente</option><option value="admin" ${u?.ruolo==='admin'?'selected':''}>Admin</option></select></div>
+    <div class="fg"><label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;font-size:13px;font-weight:500">
+      <span style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;"><input type="checkbox" id="um-attivo" ${attivoChecked?'checked':''} style="opacity:0;width:0;height:0;position:absolute"><span id="um-track" style="position:absolute;inset:0;border-radius:11px;background:${attivoChecked?'var(--verde)':'var(--g300)'};transition:background .2s;cursor:pointer"></span><span id="um-knob" style="position:absolute;top:3px;left:${attivoChecked?'21':'3'}px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s"></span></span>
+      Utente attivo</label></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal()">Annulla</button><button class="btn btn-primary" onclick="saveUtente(${isNew})">Salva</button></div>`;
+  $('um-attivo').addEventListener('change',()=>{$('um-track').style.background=$('um-attivo').checked?'var(--verde)':'var(--g300)';$('um-knob').style.left=$('um-attivo').checked?'21px':'3px';});
+  if(isNew){
+    const emailEl=$('um-email'),infoEl=$('um-email-info'),pwdWrap=$('um-pwd-wrap');
+    let dbt;
+    const doCheck=()=>checkEmailLive(emailEl,infoEl,pwdWrap,'task-manage-user');
+    emailEl.addEventListener('blur',doCheck);
+    emailEl.addEventListener('input',()=>{clearTimeout(dbt);infoEl.style.display='none';infoEl.dataset.exists='';if(emailEl.value.includes('@')&&emailEl.value.includes('.'))dbt=setTimeout(doCheck,600);});
+  }
+  openModal();
+}
+
+async function saveUtente(isNew){
+  const nome=$('um-nome').value.trim(),cognome=$('um-cognome').value.trim(),email=$('um-email').value.trim(),pwd=$('um-pwd')?.value||'',ruolo=$('um-ruolo').value,attivo=$('um-attivo').checked;
+  if(!nome||!cognome||!email){toast('Compila tutti i campi obbligatori','terr');return;}
+  try{
+    if(isNew){const res=await callFn('task-manage-user',{action:'create',nome,cognome,email,password:pwd,ruolo,attivo});if(!res.ok)throw new Error(res.error||'Errore creazione');await loadAll();toast(`Utente ${nome} creato ✓`);}
+    else{const body={nome,cognome,ruolo,attivo};if(pwd)body.password=pwd;await db('PATCH',T('profili'),{flt:`id=eq.${editingUserId}`,body});const p=S.profili.find(x=>x.id===editingUserId);if(p)Object.assign(p,body);toast('Utente aggiornato ✓');}
+    closeModal();renderPage();
+  }catch(e){toast(e.message,'terr');}
+}
+
+async function checkEmailLive(inputEl,infoEl,pwdWrap,fnName){
+  const email=inputEl.value.trim();if(!infoEl)return;
+  if(!email||!email.includes('@')||!email.includes('.')){infoEl.style.display='none';return;}
+  infoEl.className='email-info';infoEl.style.display='block';infoEl.textContent='Verifica in corso…';
+  try{
+    const data=await callFn(fnName,{action:'check_email',email});
+    if(!data.ok){infoEl.className='email-info err';infoEl.textContent='Errore: '+(data.error||'risposta non valida');return;}
+    infoEl.dataset.exists=data.exists?'true':'false';
+    if(data.exists){infoEl.className='email-info ok';infoEl.textContent='✓ Utente già presente — la password rimane la stessa impostata per gli altri tool';if(pwdWrap){pwdWrap.style.display='none';const p=pwdWrap.querySelector('input[type=password]');if(p){p.value='';p.disabled=true;}}}
+    else{infoEl.className='email-info new';infoEl.textContent='Nuovo utente — inserisci una password per creare l\'account';if(pwdWrap){pwdWrap.style.display='';const p=pwdWrap.querySelector('input[type=password]');if(p)p.disabled=false;}}
+  }catch(e){infoEl.className='email-info err';infoEl.textContent='Errore di rete: '+e.message;}
+}
+
+// MODAL
+function openModal(){$('modal-ov').classList.remove('hid');}
+function closeModal(){$('modal-ov').classList.add('hid');editingTaskId=null;editingUserId=null;}
+function closeModalOnBg(e){if(e.target===$('modal-ov'))closeModal();}
+
+// NOTIFICHE
+function scheduleReminder(task){
+  if(!task.reminder||Notification.permission!=='granted')return;
+  const ms=new Date(task.reminder).getTime()-Date.now();if(ms<=0)return;
+  setTimeout(()=>new Notification('📌 Reminder — Medical Group',{body:task.titolo}),ms);
+}
+function initNotifications(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='default')Notification.requestPermission();
+  if(Notification.permission==='granted')S.tasks.forEach(t=>{if(t.reminder)scheduleReminder(t);});
+}
+
+// VOICE
+let recognition=null,voiceOpen=false;
+function toggleVoice(){voiceOpen?closeVoice():openVoice();}
+function openVoice(){voiceOpen=true;$('voice-panel').classList.add('open');$('mic-btn-top').classList.add('active');$('vp-response').textContent='';$('vp-transcript').textContent='Il tuo messaggio apparirà qui...';setVpStatus('pronto','Pronto — premi il pulsante e parla');}
+function closeVoice(){voiceOpen=false;$('voice-panel').classList.remove('open');$('mic-btn-top').classList.remove('active');if(recognition){try{recognition.stop();}catch(e){}recognition=null;}S.voiceCtx=null;}
+function setVpStatus(orb,txt){$('vp-orb').className='vp-orb '+(orb==='thinking'?'thinking':orb==='listening'?'listening':'');$('vp-status').innerHTML=`<strong>${{pronto:'Pronto',listening:'Ascolto',thinking:'Elaboro'}[orb]||orb}</strong> — ${txt}`;}
+
+function startListening(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){$('vp-response').textContent='⚠ Riconoscimento vocale non supportato. Usa Safari su iPhone o Chrome su desktop.';return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR();recognition.lang='it-IT';recognition.interimResults=false;recognition.maxAlternatives=1;
+  $('vp-mic-btn').textContent='⏹ Stop';$('vp-mic-btn').onclick=()=>recognition.stop();
+  setVpStatus('listening','Sto ascoltando...');
+  recognition.onresult=e=>{const txt=e.results[0][0].transcript;$('vp-transcript').textContent=`"${txt}"`;$('vp-mic-btn').textContent='🎤 Parla';$('vp-mic-btn').onclick=startListening;processVoice(txt);};
+  recognition.onerror=()=>{setVpStatus('pronto','Non ho capito. Riprova.');$('vp-mic-btn').textContent='🎤 Parla';$('vp-mic-btn').onclick=startListening;};
+  recognition.start();
+}
+
+async function processVoice(text){
+  setVpStatus('thinking','Elaboro...');$('vp-response').textContent='...';
+  const cats=S.categorie.map(c=>c.nome).join(', ');
+  const people=S.profili.map(p=>`${p.nome} ${p.cognome}`).join(', ');
+  const system=`Sei l'assistente vocale di TaskFlow per Medical Group.
+Categorie: ${cats||'nessuna'}. Persone: ${people||'nessuna'}.
+Quando hai info sufficienti (almeno il titolo), rispondi SOLO con JSON:
+{"action":"create_task","titolo":"...","categoria":"...","scadenza":"YYYY-MM-DD","assegnato_a_nome":"...","priorita":"alta|media|bassa","reminder":"YYYY-MM-DDTHH:MM","confirm_message":"..."}
+Lascia vuoti i campi sconosciuti. Se mancano info fai UNA domanda in italiano.
+Date relative (domani, venerdì...) → YYYY-MM-DD (oggi: ${todayStr()}). Sii breve.`;
+  const msgs=S.voiceCtx?[...S.voiceCtx,{role:'user',content:text}]:[{role:'user',content:text}];
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:msgs})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'';
+    S.voiceCtx=[...(S.voiceCtx||[]),{role:'user',content:text},{role:'assistant',content:reply}];
+    if(S.voiceCtx.length>20)S.voiceCtx=S.voiceCtx.slice(-20);
+    const jm=reply.match(/\{[\s\S]*?"action"\s*:\s*"create_task"[\s\S]*?\}/);
+    if(jm){try{createTaskFromVoice(JSON.parse(jm[0]));return;}catch(e){}}
+    setVpStatus('pronto','Risposta ricevuta');$('vp-response').textContent=reply;
+    setTimeout(()=>{if(voiceOpen)startListening();},1200);
+  }catch(e){setVpStatus('pronto','Errore connessione');$('vp-response').textContent='Errore: '+e.message;}
+}
+
+async function createTaskFromVoice(data){
+  const cat=S.categorie.find(c=>c.nome.toLowerCase()===(data.categoria||'').toLowerCase());
+  const person=S.profili.find(p=>`${p.nome} ${p.cognome}`.toLowerCase()===(data.assegnato_a_nome||'').toLowerCase());
+  const body={titolo:data.titolo||'Nuovo task',descrizione:'',categoria_id:cat?.id||null,priorita:data.priorita||'media',scadenza:data.scadenza||null,reminder:data.reminder?new Date(data.reminder).toISOString():null,assegnato_a:person?.id||null,stato:'aperto',creato_da:S.user.id};
+  try{
+    const rows=await db('POST',T('tasks'),{body});
+    const nt=rows?.[0]||{...body,id:Math.random().toString(36).slice(2),created_at:new Date().toISOString()};
+    S.tasks.unshift(nt);if(body.reminder)scheduleReminder(nt);
+    setVpStatus('pronto','Task creato!');
+    $('vp-response').innerHTML=`✅ <strong>Task creato:</strong> "${esc(nt.titolo)}"${body.scadenza?` — scadenza ${fmt(body.scadenza)}`:''}${person?` — per ${esc(person.nome)} ${esc(person.cognome)}`:''}`;
+    S.voiceCtx=null;renderPage();initTopbar();toast(`Task "${nt.titolo}" creato ✓`);
+  }catch(e){setVpStatus('pronto','Errore');$('vp-response').textContent='Errore: '+e.message;}
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded',async()=>{
+  $('login-logo').innerHTML=logoHTML(false);
+  try{
+    const res=await fetch('https://api.github.com/repos/ictmedicalgroup-sudo/appale/commits?per_page=1');
+    if(res.ok){const[c]=await res.json();const d=new Date(c.commit.committer.date);const s='build '+d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});$('login-ver').textContent=s;if($('tb-ver'))$('tb-ver').textContent=s;}
+  }catch(e){}
+  $('lpw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  $('lem').addEventListener('keydown',e=>{if(e.key==='Enter')$('lpw').focus();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeVoice();}if((e.metaKey||e.ctrlKey)&&e.key==='n'){e.preventDefault();if(S.user)openTaskModal();}});
+  $('loading').style.display='none';
+});
+</script>
+</body>
+</html>
