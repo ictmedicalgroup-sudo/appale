@@ -869,6 +869,18 @@ function openTaskModal(taskId){
     }
   }
 
+  // Scadenza: stesso parsing robusto — un input type="date" rifiuta qualunque
+  // valore non sia esattamente YYYY-MM-DD, e Safari risponde con
+  // "the string did not match the expected pattern" se il dato dal DB
+  // arriva con timestamp/timezone invece che data pura.
+  let scadenzaLocal='';
+  if(t?.scadenza){
+    const d=new Date(t.scadenza.length===10 ? t.scadenza+'T00:00:00' : t.scadenza);
+    if(!isNaN(d.getTime())){
+      scadenzaLocal=`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`;
+    }
+  }
+
   $('modal-body').innerHTML=`
     ${!t?'<div class="modal-title">Nuovo Task</div>':''}
 
@@ -885,7 +897,7 @@ function openTaskModal(taskId){
 
     <div class="fg"><select id="m-assign" class="compact"><option value="">Assegna a</option>${pplOpts}</select></div>
 
-    <div class="fg"><label style="font-size:10px;margin-bottom:4px">Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
+    <div class="fg"><label style="font-size:10px;margin-bottom:4px">Scadenza</label><input type="date" id="m-scadenza" value="${scadenzaLocal}"></div>
     <div class="fg"><label style="font-size:10px;margin-bottom:4px">Reminder</label><input type="datetime-local" id="m-reminder" value="${reminderLocal}"></div>
 
     <div class="fg">
