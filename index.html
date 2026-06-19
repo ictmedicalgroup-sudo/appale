@@ -181,18 +181,29 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .fg-row3{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 
-/* Pulsanti segmentati (priorità / stato) */
-.seg-group{display:flex;gap:8px;}
+/* Pulsanti segmentati (priorità / stato / categoria) */
+.seg-group{display:flex;gap:8px;flex-wrap:wrap;}
 .seg-btn{
   flex:1;padding:9px 8px;border:1.5px solid var(--g200);border-radius:var(--rsm);
   background:#fff;color:var(--g500);font-family:'Raleway',sans-serif;font-size:12.5px;
-  font-weight:600;cursor:pointer;transition:all .15s;text-align:center;
+  font-weight:600;cursor:pointer;transition:all .15s;text-align:center;min-width:80px;
 }
 .seg-btn:hover{border-color:var(--g300);}
-.seg-btn.active{background:var(--blue-xlight);border-color:var(--verde);color:var(--verde);font-weight:700;}
-.seg-btn.active[data-val="alta"]{background:var(--red-light);border-color:var(--red);color:var(--red);}
-.seg-btn.active[data-val="completato"]{background:var(--green-light);border-color:var(--verde);color:#2d6a2d;}
-.seg-btn.active[data-val="in_corso"]{background:#FFF9E6;border-color:#e0b400;color:#9a6d00;}
+
+/* Priorità: bassa=grigio, media=verde, alta=rosso */
+.prio-bassa-btn.active{background:var(--g100);border-color:var(--g500);color:var(--g700);font-weight:700;}
+.prio-media-btn.active{background:var(--blue-xlight);border-color:var(--verde);color:var(--verde);font-weight:700;}
+.prio-alta-btn.active{background:var(--red-light);border-color:var(--red);color:var(--red);font-weight:700;}
+
+/* Stato: aperto=bianco con bordo, in_corso=giallo, completato=verde */
+.stato-aperto-btn.active{background:#fff;border-color:var(--g700);color:var(--g700);font-weight:700;box-shadow:inset 0 0 0 1px var(--g700);}
+.stato-in_corso-btn.active{background:#FFF9E6;border-color:#e0b400;color:#9a6d00;font-weight:700;}
+.stato-completato-btn.active{background:var(--green-light);border-color:var(--verde);color:#2d6a2d;font-weight:700;}
+
+/* Categoria: lavoro=verde, personale=blu, urgente=rosso */
+.cat-lavoro.active{background:var(--blue-xlight);border-color:var(--verde);color:var(--verde);font-weight:700;}
+.cat-personale.active{background:#E8F0FB;border-color:#3B7DD8;color:#3B7DD8;font-weight:700;}
+.cat-urgente.active{background:var(--red-light);border-color:var(--red);color:var(--red);font-weight:700;}
 
 /* Select con etichetta come opzione disabilitata iniziale */
 .fg select.compact{color:var(--g900);}
@@ -668,12 +679,17 @@ function mobileTaskCardHTML(t){
     else dueLabel=`📅 ${fmt(t.scadenza)}`;
   }
   const isDone=t.stato==='completato';
+  const catColor = cat ? (cat.nome.toLowerCase()==='personale'?'#3B7DD8':cat.nome.toLowerCase()==='lavoro'?'var(--verde)':cat.colore) : 'var(--g300)';
+  const barsHTML = t.urgente
+    ? `<div class="m-prio-bar" style="background:${catColor}"></div><div class="m-prio-bar" style="background:var(--red)"></div>`
+    : `<div class="m-prio-bar" style="background:${catColor}"></div>`;
   return `<div class="m-task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
-    <div class="m-prio-bar" style="background:${cat?cat.colore:'var(--g300)'}"></div>
+    ${barsHTML}
     <div class="m-task-body">
       <div class="m-task-title">${esc(t.titolo)}</div>
       <div class="m-task-meta">
         <span class="m-tag-stato ${t.stato}">${{aperto:'Aperto',in_corso:'In corso',completato:'Completato'}[t.stato]||t.stato}</span>
+        ${t.urgente?`<span class="m-tag-due" style="color:var(--red);font-weight:700">⚠ Urgente</span>`:''}
         ${ass?`<span class="m-tag-assignee">${esc(ass.nome)} ${esc(ass.cognome)}</span>`:''}
         ${t.scadenza?`<span class="m-tag-due ${dueClass}">${dueLabel}</span>`:''}
       </div>
@@ -793,13 +809,18 @@ function taskCardHTML(t){
   const fb=S.feedback[t.id]||[];
   const lastFb=fb[fb.length-1];
   const isDone=t.stato==='completato';
+  const catColor = cat ? (cat.nome.toLowerCase()==='personale'?'#3B7DD8':cat.nome.toLowerCase()==='lavoro'?'var(--verde)':cat.colore) : 'var(--g300)';
+  const barsHTML = t.urgente
+    ? `<div class="prio-bar" style="background:${catColor}"></div><div class="prio-bar" style="background:var(--red)"></div>`
+    : `<div class="prio-bar" style="background:${catColor}"></div>`;
   return `<div class="task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
-    <div class="prio-bar" style="background:${cat?cat.colore:'var(--g300)'}"></div>
+    ${barsHTML}
     <div class="task-check" onclick="event.stopPropagation();toggleStato('${t.id}')">${isDone?'✓':''}</div>
     <div class="task-body">
       <div class="task-title">${esc(t.titolo)}</div>
       <div class="task-meta">
-        ${cat?`<span class="tag tag-cat"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${cat.colore};margin-right:3px"></span>${esc(cat.nome)}</span>`:''}
+        ${cat?`<span class="tag tag-cat"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${catColor};margin-right:3px"></span>${esc(cat.nome)}</span>`:''}
+        ${t.urgente?`<span class="tag" style="background:var(--red-light);color:var(--red)">⚠ Urgente</span>`:''}
         ${t.scadenza?`<span class="tag tag-due ${dueClass}">${dueLabel}</span>`:''}
         ${ass?`<span class="tag tag-assignee">👤 ${esc(ass.nome)} ${esc(ass.cognome)}</span>`:''}
         <span class="tag tag-stato-${t.stato}">${{aperto:'Aperto',in_corso:'In corso',completato:'Completato'}[t.stato]||t.stato}</span>
@@ -826,7 +847,6 @@ let editingTaskId=null;
 function openTaskModal(taskId){
   editingTaskId=taskId||null;
   const t=taskId?S.tasks.find(x=>x.id===taskId):null;
-  const catOpts=S.categorie.map(c=>`<option value="${c.id}" ${t&&t.categoria_id===c.id?'selected':''}>${esc(c.nome)}</option>`).join('');
   const pplOpts=S.profili.map(p=>`<option value="${p.id}" ${t&&t.assegnato_a===p.id?'selected':''}>${esc(p.nome)} ${esc(p.cognome)}</option>`).join('');
   const fb=taskId?(S.feedback[taskId]||[]):[];
   const fbHTML=fb.map(f=>`<div class="fb-item"><div class="fb-author">${esc(f.autore_nome||'Utente')}</div><div class="fb-text">${esc(f.testo)}</div><div class="fb-date">${fmt(f.created_at)}</div></div>`).join('')||`<div style="font-size:12px;color:var(--g500)">Nessun feedback ancora.</div>`;
@@ -834,35 +854,53 @@ function openTaskModal(taskId){
   const prioVal = t?.priorita || 'media';
   const statoVal = t?.stato || 'aperto';
 
+  // Categoria: lavoro/personale (esclusivi) — trovate per nome tra le categorie esistenti
+  const catLavoro = S.categorie.find(c=>c.nome.toLowerCase()==='lavoro');
+  const catPersonale = S.categorie.find(c=>c.nome.toLowerCase()==='personale');
+  const catVal = t ? (t.categoria_id||'') : (catLavoro?.id||'');
+  const isUrgente = !!t?.urgente;
+
+  // Reminder: parsing robusto per evitare il formato non valido per datetime-local
+  let reminderLocal='';
+  if(t?.reminder){
+    const d=new Date(t.reminder);
+    if(!isNaN(d.getTime())){
+      reminderLocal=`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    }
+  }
+
   $('modal-body').innerHTML=`
-    <div class="modal-title">${t?'Modifica Task':'Nuovo Task'}</div>
+    ${!t?'<div class="modal-title">Nuovo Task</div>':''}
 
     <div class="fg"><input id="m-titolo" value="${esc(t?.titolo||'')}" placeholder="Titolo *"></div>
     <div class="fg"><textarea id="m-desc" placeholder="Descrizione" style="min-height:54px">${esc(t?.descrizione||'')}</textarea></div>
 
-    <div class="fg-row">
-      <div class="fg"><select id="m-cat" class="compact"><option value="">Categoria</option>${catOpts}</select></div>
-      <div class="fg"><select id="m-assign" class="compact"><option value="">Assegna a</option>${pplOpts}</select></div>
+    <div class="fg">
+      <div class="seg-group" id="seg-cat" data-value="${esc(catVal)}">
+        ${catLavoro?`<button type="button" class="seg-btn cat-lavoro ${catVal===catLavoro.id?'active':''}" data-val="${catLavoro.id}" onclick="setCatSeg(this,'${catLavoro.id}')">Lavoro</button>`:''}
+        ${catPersonale?`<button type="button" class="seg-btn cat-personale ${catVal===catPersonale.id?'active':''}" data-val="${catPersonale.id}" onclick="setCatSeg(this,'${catPersonale.id}')">Personale</button>`:''}
+        <button type="button" class="seg-btn cat-urgente ${isUrgente?'active':''}" id="btn-urgente" onclick="toggleUrgente(this)">Urgente</button>
+      </div>
     </div>
 
-    <div class="fg-row">
-      <div class="fg"><label style="font-size:10px;margin-bottom:4px">Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
-      <div class="fg"><label style="font-size:10px;margin-bottom:4px">Reminder</label><input type="datetime-local" id="m-reminder" value="${t?.reminder?t.reminder.slice(0,16):''}"></div>
-    </div>
+    <div class="fg"><select id="m-assign" class="compact"><option value="">Assegna a</option>${pplOpts}</select></div>
+
+    <div class="fg"><label style="font-size:10px;margin-bottom:4px">Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
+    <div class="fg"><label style="font-size:10px;margin-bottom:4px">Reminder</label><input type="datetime-local" id="m-reminder" value="${reminderLocal}"></div>
 
     <div class="fg">
       <div class="seg-group" id="seg-prio">
-        <button type="button" class="seg-btn ${prioVal==='bassa'?'active':''}" data-val="bassa" onclick="setSeg('seg-prio',this,'bassa')">Bassa</button>
-        <button type="button" class="seg-btn ${prioVal==='media'?'active':''}" data-val="media" onclick="setSeg('seg-prio',this,'media')">Media</button>
-        <button type="button" class="seg-btn ${prioVal==='alta'?'active':''}" data-val="alta" onclick="setSeg('seg-prio',this,'alta')">Alta</button>
+        <button type="button" class="seg-btn prio-bassa-btn ${prioVal==='bassa'?'active':''}" data-val="bassa" onclick="setSeg('seg-prio',this,'bassa')">Bassa</button>
+        <button type="button" class="seg-btn prio-media-btn ${prioVal==='media'?'active':''}" data-val="media" onclick="setSeg('seg-prio',this,'media')">Media</button>
+        <button type="button" class="seg-btn prio-alta-btn ${prioVal==='alta'?'active':''}" data-val="alta" onclick="setSeg('seg-prio',this,'alta')">Alta</button>
       </div>
     </div>
 
     <div class="fg">
       <div class="seg-group" id="seg-stato">
-        <button type="button" class="seg-btn ${statoVal==='aperto'?'active':''}" data-val="aperto" onclick="setSeg('seg-stato',this,'aperto')">Aperto</button>
-        <button type="button" class="seg-btn ${statoVal==='in_corso'?'active':''}" data-val="in_corso" onclick="setSeg('seg-stato',this,'in_corso')">In corso</button>
-        <button type="button" class="seg-btn ${statoVal==='completato'?'active':''}" data-val="completato" onclick="setSeg('seg-stato',this,'completato')">Completato</button>
+        <button type="button" class="seg-btn stato-aperto-btn ${statoVal==='aperto'?'active':''}" data-val="aperto" onclick="setSeg('seg-stato',this,'aperto')">Aperto</button>
+        <button type="button" class="seg-btn stato-in_corso-btn ${statoVal==='in_corso'?'active':''}" data-val="in_corso" onclick="setSeg('seg-stato',this,'in_corso')">In corso</button>
+        <button type="button" class="seg-btn stato-completato-btn ${statoVal==='completato'?'active':''}" data-val="completato" onclick="setSeg('seg-stato',this,'completato')">Completato</button>
       </div>
     </div>
 
@@ -889,16 +927,38 @@ function getSegValue(groupId,fallback){
   return group?.dataset.value || group?.querySelector('.seg-btn.active')?.dataset.val || fallback;
 }
 
+// Lavoro/Personale sono esclusivi tra loro (radio); Urgente è indipendente (toggle)
+function setCatSeg(btn,val){
+  const group=$('seg-cat');
+  group.querySelectorAll('.seg-btn').forEach(b=>{ if(b.id!=='btn-urgente') b.classList.remove('active'); });
+  btn.classList.add('active');
+  group.dataset.value=val;
+}
+function toggleUrgente(btn){
+  btn.classList.toggle('active');
+}
+
 async function saveTask(){
   const titolo=$('m-titolo').value.trim();
   if(!titolo){toast('Inserisci un titolo per il task','terr');$('m-titolo').focus();return;}
+
+  // Reminder: costruito manualmente dai componenti datetime-local per evitare
+  // problemi di parsing/timezone che generano "the string did not match the expected pattern"
+  let reminderISO=null;
+  const remInput=$('m-reminder').value;
+  if(remInput){
+    const d=new Date(remInput);
+    if(!isNaN(d.getTime())) reminderISO=d.toISOString();
+  }
+
   const body={
     titolo,
     descrizione:$('m-desc').value.trim(),
-    categoria_id:$('m-cat').value||null,
+    categoria_id:getSegValue('seg-cat',null)||null,
+    urgente:$('btn-urgente')?.classList.contains('active')||false,
     priorita:getSegValue('seg-prio','media'),
     scadenza:$('m-scadenza').value||null,
-    reminder:$('m-reminder').value?new Date($('m-reminder').value).toISOString():null,
+    reminder:reminderISO,
     assegnato_a:$('m-assign').value||null,
     stato:getSegValue('seg-stato','aperto'),
   };
