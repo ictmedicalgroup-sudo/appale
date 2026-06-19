@@ -979,16 +979,28 @@ async function saveTask(){
       await db('PATCH',T('tasks'),{flt:`id=eq.${editingTaskId}`,body});
       const idx=S.tasks.findIndex(t=>t.id===editingTaskId);
       if(idx>=0)S.tasks[idx]={...S.tasks[idx],...body};
-      toast('Task aggiornato ✓');
     }else{
       body.creato_da=S.user.id;
       const rows=await db('POST',T('tasks'),{body});
       if(rows?.[0])S.tasks.unshift(rows[0]);
-      toast('Task creato ✓');
       if(body.reminder)scheduleReminder({...body,id:rows?.[0]?.id,titolo});
     }
-    closeModal();renderPage();initTopbar();
-  }catch(e){toast(e.message,'terr');}
+  }catch(e){
+    console.error('Errore salvataggio task:',e);
+    toast(e.message,'terr');
+    return;
+  }
+  // Il salvataggio è andato a buon fine: qualunque errore da qui in avanti
+  // riguarda solo il refresh della UI, non i dati (già salvati correttamente)
+  try{
+    closeModal();
+    renderPage();
+    initTopbar();
+    toast(editingTaskId?'Task aggiornato ✓':'Task creato ✓');
+  }catch(e){
+    console.error('Task salvato, ma errore nel refresh UI:',e);
+    toast('Task salvato. Ricarica la pagina per vederlo aggiornato.','tinfo');
+  }
 }
 
 async function deleteTask(id){
