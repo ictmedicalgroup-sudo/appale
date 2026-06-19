@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fff">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>TaskFlow — Medical Group</title>
@@ -696,7 +697,7 @@ Lascia vuoti i campi sconosciuti. Se mancano info fai UNA domanda in italiano.
 Date relative (domani, venerdì...) → YYYY-MM-DD (oggi: ${todayStr()}). Sii breve.`;
   const msgs=S.voiceCtx?[...S.voiceCtx,{role:'user',content:text}]:[{role:'user',content:text}];
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:msgs})});
+    const res=await fetch(`${CFG.FN}/task-ai-proxy`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${S.token||CFG.KEY}`},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system,messages:msgs})});
     const data=await res.json();const reply=data.content?.[0]?.text||'';
     S.voiceCtx=[...(S.voiceCtx||[]),{role:'user',content:text},{role:'assistant',content:reply}];
     if(S.voiceCtx.length>20)S.voiceCtx=S.voiceCtx.slice(-20);
