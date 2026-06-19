@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#fff">
@@ -49,6 +49,9 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
     flex-direction:column;
     overflow:hidden;
   }
+  /* Previene lo zoom automatico di iOS Safari al focus di un input
+     (si attiva quando il font-size calcolato è sotto i 16px) */
+  input,select,textarea{font-size:16px!important;}
 }
 
 /* TOAST */
