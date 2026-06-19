@@ -179,6 +179,24 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 .fg textarea{resize:vertical;min-height:80px;}
 .fg select option{background:#fff;}
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fg-row3{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* Pulsanti segmentati (priorità / stato) */
+.seg-group{display:flex;gap:8px;}
+.seg-btn{
+  flex:1;padding:9px 8px;border:1.5px solid var(--g200);border-radius:var(--rsm);
+  background:#fff;color:var(--g500);font-family:'Raleway',sans-serif;font-size:12.5px;
+  font-weight:600;cursor:pointer;transition:all .15s;text-align:center;
+}
+.seg-btn:hover{border-color:var(--g300);}
+.seg-btn.active{background:var(--blue-xlight);border-color:var(--verde);color:var(--verde);font-weight:700;}
+.seg-btn.active[data-val="alta"]{background:var(--red-light);border-color:var(--red);color:var(--red);}
+.seg-btn.active[data-val="completato"]{background:var(--green-light);border-color:var(--verde);color:#2d6a2d;}
+.seg-btn.active[data-val="in_corso"]{background:#FFF9E6;border-color:#e0b400;color:#9a6d00;}
+
+/* Select con etichetta come opzione disabilitata iniziale */
+.fg select.compact{color:var(--g900);}
+.fg select.compact option[value=""]{color:var(--g500);}
 
 /* FEEDBACK */
 .fb-section{margin-top:20px;padding-top:20px;border-top:1px solid var(--g200);}
@@ -641,6 +659,7 @@ function renderMobileTaskList(){
 
 function mobileTaskCardHTML(t){
   const ass=S.profili.find(p=>p.id===t.assegnato_a);
+  const cat=S.categorie.find(c=>c.id===t.categoria_id);
   const td=todayStr();
   let dueClass='',dueLabel='';
   if(t.scadenza){
@@ -650,7 +669,7 @@ function mobileTaskCardHTML(t){
   }
   const isDone=t.stato==='completato';
   return `<div class="m-task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
-    <div class="m-prio-bar prio-${t.priorita}"></div>
+    <div class="m-prio-bar" style="background:${cat?cat.colore:'var(--g300)'}"></div>
     <div class="m-task-body">
       <div class="m-task-title">${esc(t.titolo)}</div>
       <div class="m-task-meta">
@@ -775,7 +794,7 @@ function taskCardHTML(t){
   const lastFb=fb[fb.length-1];
   const isDone=t.stato==='completato';
   return `<div class="task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
-    <div class="prio-bar prio-${t.priorita}"></div>
+    <div class="prio-bar" style="background:${cat?cat.colore:'var(--g300)'}"></div>
     <div class="task-check" onclick="event.stopPropagation();toggleStato('${t.id}')">${isDone?'✓':''}</div>
     <div class="task-body">
       <div class="task-title">${esc(t.titolo)}</div>
@@ -812,23 +831,43 @@ function openTaskModal(taskId){
   const fb=taskId?(S.feedback[taskId]||[]):[];
   const fbHTML=fb.map(f=>`<div class="fb-item"><div class="fb-author">${esc(f.autore_nome||'Utente')}</div><div class="fb-text">${esc(f.testo)}</div><div class="fb-date">${fmt(f.created_at)}</div></div>`).join('')||`<div style="font-size:12px;color:var(--g500)">Nessun feedback ancora.</div>`;
 
+  const prioVal = t?.priorita || 'media';
+  const statoVal = t?.stato || 'aperto';
+
   $('modal-body').innerHTML=`
     <div class="modal-title">${t?'Modifica Task':'Nuovo Task'}</div>
-    <div class="fg"><label>Titolo *</label><input id="m-titolo" value="${esc(t?.titolo||'')}" placeholder="Descrivi il task..."></div>
-    <div class="fg"><label>Descrizione</label><textarea id="m-desc">${esc(t?.descrizione||'')}</textarea></div>
+
+    <div class="fg"><input id="m-titolo" value="${esc(t?.titolo||'')}" placeholder="Titolo *"></div>
+    <div class="fg"><textarea id="m-desc" placeholder="Descrizione" style="min-height:54px">${esc(t?.descrizione||'')}</textarea></div>
+
     <div class="fg-row">
-      <div class="fg"><label>Categoria</label><select id="m-cat"><option value="">— Nessuna —</option>${catOpts}</select></div>
-      <div class="fg"><label>Priorità</label><select id="m-prio"><option value="media" ${(!t||t.priorita==='media')?'selected':''}>Media</option><option value="alta" ${t?.priorita==='alta'?'selected':''}>Alta</option><option value="bassa" ${t?.priorita==='bassa'?'selected':''}>Bassa</option></select></div>
+      <div class="fg"><select id="m-cat" class="compact"><option value="">Categoria</option>${catOpts}</select></div>
+      <div class="fg"><select id="m-assign" class="compact"><option value="">Assegna a</option>${pplOpts}</select></div>
     </div>
+
     <div class="fg-row">
-      <div class="fg"><label>Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
-      <div class="fg"><label>Assegna a</label><select id="m-assign"><option value="">— Nessuno —</option>${pplOpts}</select></div>
+      <div class="fg"><label style="font-size:10px;margin-bottom:4px">Scadenza</label><input type="date" id="m-scadenza" value="${t?.scadenza||''}"></div>
+      <div class="fg"><label style="font-size:10px;margin-bottom:4px">Reminder</label><input type="datetime-local" id="m-reminder" value="${t?.reminder?t.reminder.slice(0,16):''}"></div>
     </div>
-    <div class="fg-row">
-      <div class="fg"><label>Reminder</label><input type="datetime-local" id="m-reminder" value="${t?.reminder?t.reminder.slice(0,16):''}"></div>
-      <div class="fg"><label>Stato</label><select id="m-stato"><option value="aperto" ${(!t||t.stato==='aperto')?'selected':''}>Aperto</option><option value="in_corso" ${t?.stato==='in_corso'?'selected':''}>In corso</option><option value="completato" ${t?.stato==='completato'?'selected':''}>Completato</option></select></div>
+
+    <div class="fg">
+      <div class="seg-group" id="seg-prio">
+        <button type="button" class="seg-btn ${prioVal==='bassa'?'active':''}" data-val="bassa" onclick="setSeg('seg-prio',this,'bassa')">Bassa</button>
+        <button type="button" class="seg-btn ${prioVal==='media'?'active':''}" data-val="media" onclick="setSeg('seg-prio',this,'media')">Media</button>
+        <button type="button" class="seg-btn ${prioVal==='alta'?'active':''}" data-val="alta" onclick="setSeg('seg-prio',this,'alta')">Alta</button>
+      </div>
     </div>
+
+    <div class="fg">
+      <div class="seg-group" id="seg-stato">
+        <button type="button" class="seg-btn ${statoVal==='aperto'?'active':''}" data-val="aperto" onclick="setSeg('seg-stato',this,'aperto')">Aperto</button>
+        <button type="button" class="seg-btn ${statoVal==='in_corso'?'active':''}" data-val="in_corso" onclick="setSeg('seg-stato',this,'in_corso')">In corso</button>
+        <button type="button" class="seg-btn ${statoVal==='completato'?'active':''}" data-val="completato" onclick="setSeg('seg-stato',this,'completato')">Completato</button>
+      </div>
+    </div>
+
     ${t?`<div class="fb-section"><div class="fb-section-title">Feedback (${fb.length})</div><div class="fb-list">${fbHTML}</div><div class="fb-input-row"><input id="fb-new" placeholder="Aggiungi un aggiornamento..."><button class="btn btn-ghost btn-sm" onclick="addFeedback('${t.id}')">Invia</button></div></div>`:''}
+
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Annulla</button>
       ${t?`<button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Elimina</button>`:''}
@@ -838,10 +877,31 @@ function openTaskModal(taskId){
   setTimeout(()=>$('m-titolo')?.focus(),80);
 }
 
+function setSeg(groupId,btn,val){
+  const group=$(groupId);
+  group.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  group.dataset.value=val;
+}
+
+function getSegValue(groupId,fallback){
+  const group=$(groupId);
+  return group?.dataset.value || group?.querySelector('.seg-btn.active')?.dataset.val || fallback;
+}
+
 async function saveTask(){
   const titolo=$('m-titolo').value.trim();
   if(!titolo){toast('Inserisci un titolo per il task','terr');$('m-titolo').focus();return;}
-  const body={titolo,descrizione:$('m-desc').value.trim(),categoria_id:$('m-cat').value||null,priorita:$('m-prio').value,scadenza:$('m-scadenza').value||null,reminder:$('m-reminder').value?new Date($('m-reminder').value).toISOString():null,assegnato_a:$('m-assign').value||null,stato:$('m-stato').value};
+  const body={
+    titolo,
+    descrizione:$('m-desc').value.trim(),
+    categoria_id:$('m-cat').value||null,
+    priorita:getSegValue('seg-prio','media'),
+    scadenza:$('m-scadenza').value||null,
+    reminder:$('m-reminder').value?new Date($('m-reminder').value).toISOString():null,
+    assegnato_a:$('m-assign').value||null,
+    stato:getSegValue('seg-stato','aperto'),
+  };
   try{
     if(editingTaskId){
       await db('PATCH',T('tasks'),{flt:`id=eq.${editingTaskId}`,body});
