@@ -28,9 +28,28 @@
   font-family:'Raleway',sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--g50);color:var(--g900);font-family:'Raleway',sans-serif;min-height:100vh;}
+html,body{background:var(--g50);color:var(--g900);font-family:'Raleway',sans-serif;}
+body{min-height:100vh;}
 .hid{display:none!important;}
 button{font-family:'Raleway',sans-serif;cursor:pointer;}
+
+@media(max-width:680px){
+  html,body{
+    height:100%;
+    overflow:hidden;
+    position:fixed;
+    width:100%;
+  }
+  #app{
+    position:fixed;
+    inset:0;
+    height:100vh;
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+}
 
 /* TOAST */
 #toast{position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:var(--r);font-size:13px;font-weight:600;box-shadow:var(--sh-lg);opacity:0;pointer-events:none;transition:opacity .25s;max-width:320px;}
@@ -52,7 +71,7 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 
 /* APP */
 #app{display:flex;flex-direction:column;min-height:100vh;}
-#topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);}
+#topbar{background:#fff;border-bottom:1px solid var(--g200);padding:0 28px;position:sticky;top:0;z-index:100;box-shadow:var(--sh-sm);flex-shrink:0;}
 #tb-top{height:52px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--g100);}
 #tb-right{display:flex;align-items:center;gap:14px;}
 #tb-ver{font-size:10px;color:var(--grigio-chiaro);letter-spacing:.3px;}
@@ -64,6 +83,11 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 .tnb{display:flex;align-items:center;gap:6px;padding:0 16px;font-size:12.5px;font-weight:600;color:var(--g500);cursor:pointer;border:none;background:none;font-family:'Raleway',sans-serif;letter-spacing:.3px;border-bottom:2.5px solid transparent;transition:all .17s;text-transform:uppercase;}
 .tnb:hover{color:var(--g700);border-bottom-color:var(--g300);}
 .tnb.active{color:var(--verde);border-bottom-color:var(--verde);}
+
+@media(max-width:680px){
+  #tb-role{display:none;}
+  .m-logo-text > div:first-child,.m-logo-sub{display:none;}
+}
 .tnb .nbadge{background:var(--verde);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
 #main{flex:1;}
 #pb{padding:28px 32px;max-width:1100px;margin:0 auto;}
@@ -228,12 +252,14 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 @media(max-width:680px){
   #tb-nav,.page-hdr,.stats-row{display:none;}
   #pb{display:none;}
-  #m-tasks-view.active{display:flex;}
   #mic-btn-top{display:none;}
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+  #m-tasks-view.active{display:flex;}
 }
 #m-tasks-view{
   flex-direction:column;
-  height:calc(100vh - 52px);
+  flex:1;
+  min-height:0;
   overflow:hidden;
 }
 #m-fixed-top{
@@ -244,10 +270,16 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 .m-search-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .m-search-wrap{flex:1;position:relative;}
 .m-search-wrap input{
-  width:100%;padding:10px 40px 10px 14px;border:1px solid var(--g200);border-radius:20px;
+  width:100%;padding:10px 68px 10px 14px;border:1px solid var(--g200);border-radius:20px;
   font-family:'Raleway',sans-serif;font-size:13.5px;color:var(--g900);background:#fff;outline:none;
 }
 .m-search-wrap input:focus{border-color:var(--verde);}
+.m-search-clear{
+  position:absolute;right:36px;top:50%;transform:translateY(-50%);
+  width:22px;height:22px;border-radius:50%;border:none;background:var(--g200);
+  color:var(--g500);font-size:13px;display:none;align-items:center;justify-content:center;cursor:pointer;line-height:1;
+}
+.m-search-clear.show{display:flex;}
 .m-search-mic{
   position:absolute;right:6px;top:50%;transform:translateY(-50%);
   width:28px;height:28px;border-radius:50%;border:none;background:none;
@@ -365,6 +397,7 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
         <div class="m-search-row">
           <div class="m-search-wrap">
             <input id="m-search" placeholder="Filtra per task, assegnato a...">
+            <button class="m-search-clear" id="m-search-clear-btn" onclick="clearMobileSearch()">✕</button>
             <button class="m-search-mic" id="m-search-mic-btn" onclick="toggleSearchVoice()">🎤</button>
           </div>
           <div>
@@ -496,7 +529,7 @@ async function loadAll(){
 
 // LOGO
 function logoSVG(small){const w=small?28:36,h=small?22:28;return `<svg width="${w}" height="${h}" viewBox="0 0 90 70" fill="none"><circle cx="28" cy="22" r="19" stroke="#D5E3B7" stroke-width="3.5" fill="none"/><circle cx="40" cy="38" r="24" stroke="#77797A" stroke-width="3.5" fill="none"/></svg>`;}
-function logoHTML(small=false){return `<div style="display:flex;align-items:center;gap:${small?6:10}px;">${logoSVG(small)}<div style="line-height:1.15;"><div style="font-weight:300;font-size:${small?11:14}px;letter-spacing:4px;text-transform:uppercase;"><span style="color:var(--grigio)">MEDICAL</span><span style="color:var(--verde)">GROUP</span></div><div style="font-size:9px;letter-spacing:2px;color:var(--grigio-chiaro);text-transform:uppercase;font-weight:500;">Gestione Task</div></div></div>`;}
+function logoHTML(small=false){return `<div style="display:flex;align-items:center;gap:${small?6:10}px;">${logoSVG(small)}<div style="line-height:1.15;" class="m-logo-text"><div style="font-weight:300;font-size:${small?11:14}px;letter-spacing:4px;text-transform:uppercase;"><span style="color:var(--grigio)">MEDICAL</span><span style="color:var(--verde)">GROUP</span></div><div class="m-logo-sub" style="font-size:9px;letter-spacing:2px;color:var(--grigio-chiaro);text-transform:uppercase;font-weight:500;">Gestione Task</div></div></div>`;}
 
 // TOPBAR
 function initTopbar(){
@@ -537,6 +570,7 @@ function renderMobileTasks(){
 
   const sEl=$('m-search');
   if(sEl && document.activeElement!==sEl) sEl.value=S.searchQ||'';
+  updateSearchClearBtn();
   const doneToggle=$('m-show-done');
   if(doneToggle) doneToggle.checked=!!S.showDone;
 
@@ -616,7 +650,6 @@ function mobileTaskCardHTML(t){
   const isDone=t.stato==='completato';
   return `<div class="m-task-card ${isDone?'done':''}" onclick="openTaskModal('${t.id}')">
     <div class="m-prio-bar prio-${t.priorita}"></div>
-    <div class="m-task-check" onclick="event.stopPropagation();toggleStatoMobile('${t.id}')">${isDone?'✓':''}</div>
     <div class="m-task-body">
       <div class="m-task-title">${esc(t.titolo)}</div>
       <div class="m-task-meta">
@@ -639,10 +672,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(sEl){
     sEl.addEventListener('input',()=>{
       S.searchQ=sEl.value;
+      updateSearchClearBtn();
       renderMobileTaskList();
     });
   }
 });
+
+function updateSearchClearBtn(){
+  const btn=$('m-search-clear-btn');
+  if(btn) btn.classList.toggle('show', !!(S.searchQ&&S.searchQ.length));
+}
+
+function clearMobileSearch(){
+  S.searchQ='';
+  const sEl=$('m-search');
+  if(sEl){ sEl.value=''; sEl.focus(); }
+  updateSearchClearBtn();
+  renderMobileTaskList();
+}
 
 // ── RICERCA VOCALE (compila la search box) ──
 let searchRecognition=null,searchListening=false;
@@ -661,6 +708,7 @@ function toggleSearchVoice(){
     for(let i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript;
     $('m-search').value=txt;
     S.searchQ=txt;
+    updateSearchClearBtn();
     renderMobileTaskList();
   };
   searchRecognition.onend=()=>{ searchListening=false; $('m-search-mic-btn').classList.remove('active'); };
