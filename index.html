@@ -42,14 +42,6 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
     width:100%;
   }
   #app{
-    position:fixed;
-    inset:0;
-    height:100vh;
-    height:100dvh;
-    min-height:0;
-    max-height:100dvh;
-    display:flex;
-    flex-direction:column;
     overflow:hidden;
   }
   /* Previene lo zoom automatico di iOS Safari al focus di un input
@@ -259,14 +251,15 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
   #tb-nav,.page-hdr,.stats-row{display:none;}
   #pb{display:none;}
   #mic-btn-top{display:none;}
-  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-  #m-tasks-view.active{display:flex;}
+  #topbar{position:fixed;top:0;left:0;right:0;z-index:50;}
+  #m-tasks-view.active{display:block;}
 }
 #m-tasks-view{
+  position:fixed;
+  top:52px;
+  left:0;right:0;bottom:0;
+  display:flex;
   flex-direction:column;
-  flex:1;
-  min-height:0;
-  overflow:hidden;
 }
 #m-fixed-top{
   flex-shrink:0;
@@ -319,7 +312,8 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 .m-cat-chip.active{background:var(--g50);border-width:2px;font-weight:700;}
 
 #m-task-scroll{
-  flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  flex:1 1 auto;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:0 14px 14px;
 }
 .m-task-card{
@@ -351,6 +345,7 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
 
 #m-bottom-actions{
   flex-shrink:0;display:flex;gap:10px;padding:12px 14px;
+  padding-bottom:max(12px, env(safe-area-inset-bottom));
   background:#fff;border-top:1px solid var(--g200);
 }
 .m-btn-big{
@@ -391,7 +386,7 @@ button{font-family:'Raleway',sans-serif;cursor:pointer;}
         <span id="tb-user"></span>
         <span id="tb-role"></span>
         <button class="mic-btn" id="mic-btn-top" onclick="toggleVoice()" title="Crea task con la voce">🎤</button>
-        <button id="lout" onclick="doLogout()">Escix</button>
+        <button id="lout" onclick="doLogout()">EsciM</button>
       </div>
     </div>
     <nav id="tb-nav"></nav>
