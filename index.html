@@ -671,8 +671,20 @@ function initNotifications(){
 let recognition=null,voiceOpen=false;
 function toggleVoice(){voiceOpen?closeVoice():openVoice();}
 function openVoice(){voiceOpen=true;$('voice-panel').classList.add('open');$('mic-btn-top').classList.add('active');$('vp-response').textContent='';$('vp-transcript').textContent='Il tuo messaggio apparirà qui...';setVpStatus('pronto','Pronto — premi il pulsante e parla');}
-function closeVoice(){voiceOpen=false;$('voice-panel').classList.remove('open');$('mic-btn-top').classList.remove('active');if(recognition){try{recognition.stop();}catch(e){}recognition=null;}S.voiceCtx=null;}
+function closeVoice(){voiceOpen=false;$('voice-panel').classList.remove('open');$('mic-btn-top').classList.remove('active');if(recognition){try{recognition.stop();}catch(e){}recognition=null;}if('speechSynthesis' in window)window.speechSynthesis.cancel();S.voiceCtx=null;}
 function setVpStatus(orb,txt){$('vp-orb').className='vp-orb '+(orb==='thinking'?'thinking':orb==='listening'?'listening':'');$('vp-status').innerHTML=`<strong>${{pronto:'Pronto',listening:'Ascolto',thinking:'Elaboro'}[orb]||orb}</strong> — ${txt}`;}
+
+function speak(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  window.speechSynthesis.cancel();
+  const clean=text.replace(/[*_#`]/g,'');
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='it-IT';u.rate=1.0;u.pitch=1.0;
+  const voices=window.speechSynthesis.getVoices();
+  const itVoice=voices.find(v=>v.lang.startsWith('it'));
+  if(itVoice)u.voice=itVoice;
+  window.speechSynthesis.speak(u);
+}
 
 function startListening(){
   if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){$('vp-response').textContent='⚠ Riconoscimento vocale non supportato. Usa Safari su iPhone o Chrome su desktop.';return;}
@@ -704,7 +716,8 @@ Date relative (domani, venerdì...) → YYYY-MM-DD (oggi: ${todayStr()}). Sii br
     const jm=reply.match(/\{[\s\S]*?"action"\s*:\s*"create_task"[\s\S]*?\}/);
     if(jm){try{createTaskFromVoice(JSON.parse(jm[0]));return;}catch(e){}}
     setVpStatus('pronto','Risposta ricevuta');$('vp-response').textContent=reply;
-    setTimeout(()=>{if(voiceOpen)startListening();},1200);
+    speak(reply);
+    setTimeout(()=>{if(voiceOpen)startListening();},Math.max(1500,reply.length*60));
   }catch(e){setVpStatus('pronto','Errore connessione');$('vp-response').textContent='Errore: '+e.message;}
 }
 
@@ -717,7 +730,9 @@ async function createTaskFromVoice(data){
     const nt=rows?.[0]||{...body,id:Math.random().toString(36).slice(2),created_at:new Date().toISOString()};
     S.tasks.unshift(nt);if(body.reminder)scheduleReminder(nt);
     setVpStatus('pronto','Task creato!');
+    const confirmMsg=`Task creato: ${nt.titolo}`;
     $('vp-response').innerHTML=`✅ <strong>Task creato:</strong> "${esc(nt.titolo)}"${body.scadenza?` — scadenza ${fmt(body.scadenza)}`:''}${person?` — per ${esc(person.nome)} ${esc(person.cognome)}`:''}`;
+    speak(data.confirm_message||confirmMsg);
     S.voiceCtx=null;renderPage();initTopbar();toast(`Task "${nt.titolo}" creato ✓`);
   }catch(e){setVpStatus('pronto','Errore');$('vp-response').textContent='Errore: '+e.message;}
 }
